@@ -307,10 +307,19 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! TableViewCell
-        print(places[indexPath.row].subtitle)
         cell.cityLabel.text = places[indexPath.row].title
         cell.titleLabel.text = places[indexPath.row].subtitle
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let pin = places[indexPath.row]
+            places.remove(at: indexPath.row)
+            mapView.removeAnnotation(pin)
+            tableView.reloadData()
+            print(places)
+        }
     }
 }
 
@@ -391,4 +400,3 @@ extension ViewController: EditLocationDelegate {
 
 extension ViewController: UIGestureRecognizerDelegate {}
 
-//delegate view for annotation, call out, bring subview to front
