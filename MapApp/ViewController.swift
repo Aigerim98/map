@@ -29,9 +29,19 @@ class ViewController: UIViewController {
         return tableView
     }()
     
-    private let segmentedControl = UISegmentedControl (items: ["Standard","Satellite","Hybrid"])
-    private var leftButton = UIButton()
+    private var leftButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
     
+    private var rightButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let segmentedControl = UISegmentedControl (items: ["Standard","Satellite","Hybrid"])
     private var previousLocation: CLLocation?
     private let locationManager = CLLocationManager()
     
@@ -53,6 +63,9 @@ class ViewController: UIViewController {
         let longTapGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongTappedGesture(gestureRecognizer:)))
         mapView.addGestureRecognizer(longTapGesture)
         
+        rightButton.addTarget(self, action: #selector(changeRegion), for: .touchUpInside)
+        leftButton.addTarget(self, action: #selector(changeRegion), for: .touchUpInside)
+                          
         //tapObserver()
     }
     
@@ -83,15 +96,20 @@ class ViewController: UIViewController {
         segmentedControl.translatesAutoresizingMaskIntoConstraints = false
         segmentedControl.bottomAnchor.constraint(equalTo: blurEffectView.bottomAnchor, constant: -20).isActive = true
         segmentedControl.centerXAnchor.constraint(equalTo: blurEffectView.centerXAnchor).isActive = true
+        
+        blurEffectView.contentView.addSubview(leftButton)
+        leftButton.topAnchor.constraint(equalTo: blurEffectView.topAnchor).isActive = true
+        leftButton.leadingAnchor.constraint(equalTo: blurEffectView.leadingAnchor).isActive = true
+        leftButton.bottomAnchor.constraint(equalTo: blurEffectView.bottomAnchor).isActive = true
+        leftButton.trailingAnchor.constraint(equalTo: segmentedControl.leadingAnchor).isActive = true
+    
+        blurEffectView.contentView.addSubview(rightButton)
+        rightButton.topAnchor.constraint(equalTo: blurEffectView.topAnchor).isActive = true
+        rightButton.leadingAnchor.constraint(equalTo: segmentedControl.trailingAnchor).isActive = true
+        rightButton.bottomAnchor.constraint(equalTo: blurEffectView.bottomAnchor).isActive = true
+        rightButton.trailingAnchor.constraint(equalTo: blurEffectView.trailingAnchor).isActive = true
     }
-    
-//    private func setUpBlurView() {
-//        let blurEffect = UIBlurEffect(style: .light)
-//        let blurEffectView = UIVisualEffectView(effect: blurEffect)
-//        blurEffectView.translatesAutoresizingMaskIntoConstraints = false
-//        view.addSubview(blurEffectView)
-//    }
-    
+        
     private func setUpSegmentedControl() {
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action:  #selector(self.segmentedValueChanged(_:)), for: .valueChanged)
@@ -164,24 +182,27 @@ class ViewController: UIViewController {
 //        }
 //    }
     
-    func changeRegion (direction: String) {
+    @objc func changeRegion (_ sender: UIButton) {
+        
         if places.isEmpty {return}
         
-        if index < 0 {
-            index = 0
-        } else if index >= places.count {
-            index = places.count - 1
-        }
-        
-        if direction == "right" {
+        if sender == rightButton {
             index += 1
-        }else if direction == "left"{
+        }else if sender == leftButton{
+            print("left")
             index -= 1
         }
         
-        print("index: \(index)")
-        print("place: \(places[index].subtitle)")
-        mapView.setRegion(MKCoordinateRegion(center: places[index].coordinate, span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)), animated: false)
+        if index < 0 || index >= places.count {
+            index = 0
+        }
+//                if index < 0 {
+//                    index = 0
+//                } else if index >= places.count {
+//                    index = places.count - 1
+//                }
+        print(index)
+        mapView.setRegion(MKCoordinateRegion(center: places[index].coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)), animated: false)
         
     }
     
