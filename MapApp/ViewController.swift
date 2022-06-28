@@ -55,13 +55,12 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadPins()
-        print(pins[0])
         mapView.delegate = self
-        setUpNavigation()
         checkLocationServices()
         setUpConstraints()
         setUpSegmentedControl()
         setUpTable()
+        setUpNavigation()
         
         let longTapGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongTappedGesture(gestureRecognizer:)))
         mapView.addGestureRecognizer(longTapGesture)
@@ -111,6 +110,15 @@ class ViewController: UIViewController {
         rightButton.leadingAnchor.constraint(equalTo: segmentedControl.trailingAnchor).isActive = true
         rightButton.bottomAnchor.constraint(equalTo: blurEffectView.bottomAnchor).isActive = true
         rightButton.trailingAnchor.constraint(equalTo: blurEffectView.trailingAnchor).isActive = true
+        
+        let topBlurEffect = UIBlurEffect(style: .light)
+        let topBlurEffectView = UIVisualEffectView(effect: topBlurEffect)
+        topBlurEffectView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(topBlurEffectView)
+        topBlurEffectView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        topBlurEffectView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        topBlurEffectView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        topBlurEffectView.heightAnchor.constraint(equalToConstant: 100).isActive = true
     }
         
     private func setUpSegmentedControl() {
@@ -138,7 +146,6 @@ class ViewController: UIViewController {
     }
     
     private func setUpNavigation() {
-        self.navigationItem.title = self.city
         self.navigationController?.view.backgroundColor = .clear
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.black]
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .organize, target: self, action: #selector(showTable))
@@ -410,6 +417,7 @@ extension ViewController: CLLocationManagerDelegate {
         
         getCity(location: CLLocation(latitude: coordinates.latitude, longitude: coordinates.longitude)) { city in
             self.city = city
+            self.navigationItem.title = self.city
         }
         
         let pin = MKPointAnnotation()
@@ -436,10 +444,9 @@ extension ViewController: MKMapViewDelegate {
         if annotation is MKUserLocation {return nil}
 
         let reuseId = "pin"
-        
         var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
+        
         if pinView == nil {
-            
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
             pinView!.canShowCallout = true
             pinView!.animatesDrop = true
