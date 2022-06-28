@@ -46,6 +46,7 @@ class ViewController: UIViewController {
     private let locationManager = CLLocationManager()
     
     private var places = [MKPointAnnotation]()
+    private var pins: [NSManagedObject] = []
     private var city: String!
     private var name: String!
     private var index: Int = 0
@@ -53,6 +54,8 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadPins()
+        print(pins[0])
         mapView.delegate = self
         setUpNavigation()
         checkLocationServices()
@@ -196,11 +199,6 @@ class ViewController: UIViewController {
         if index < 0 || index >= places.count {
             index = 0
         }
-//                if index < 0 {
-//                    index = 0
-//                } else if index >= places.count {
-//                    index = places.count - 1
-//                }
         print(index)
         mapView.setRegion(MKCoordinateRegion(center: places[index].coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)), animated: false)
         
@@ -258,6 +256,7 @@ class ViewController: UIViewController {
                 pin.title = city
                 mapView.addAnnotation(pin)
                 places.append(pin)
+                savePin(locationCoordinate.latitude, locationCoordinate.longitude, city, text)
                 tableView.reloadData()
             }
             
@@ -318,6 +317,58 @@ class ViewController: UIViewController {
         previousLocation = getCenterLocation(for: mapView)
     }
     
+    private func loadPins(){
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let managedContext = appDelegate.persistentContainer.viewContext
+        
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "Pin")
+        
+        do {
+            pins = try managedContext.fetch(fetchRequest)
+        }catch let error as NSError {
+            print("could not fetch")
+        }
+    }
+    
+    private func savePin(_ latitude: Double, _ longtitude: Double, _ title: String, _ subtitle: String) {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let managedContext = appDelegate.persistentContainer.viewContext
+        let entity = NSEntityDescription.entity(forEntityName: "Pin", in: managedContext)!
+        let pin = NSManagedObject(entity: entity, insertInto: managedContext)
+        pin.setValue(latitude, forKey: "latitude")
+        pin.setValue(longtitude, forKey: "longtitude")
+        pin.setValue(title, forKey: "title")
+        pin.setValue(subtitle, forKey: "subtitle")
+        
+        do {
+            try managedContext.save()
+            pins.append(pin)
+            tableView.reloadData()
+        }catch let error as NSError {
+            print("Could not save. \(error),\(error.userInfo)")
+        }
+    }
+    
+    private func deletePin(_ latitude: Double, _ longtitude: Double, _ title: String, _ subtitle: String) {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let managedContext = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "Pin")
+        let p1 = NSPredicate(format: "latitude == %@", String(latitude))
+        let p2 = NSPredicate(format: "longtitude == %@", String(longtitude))
+        let p3 = NSPredicate(format: "title == %@", title)
+        let p4 = NSPredicate(format: "subtitle == %@", subtitle)
+        let p_and = NSCompoundPredicate(type: .and, subpredicates: [p1, p2, p3, p4])
+        fetchRequest.predicate = p_and
+        
+        do {
+            let results = try managedContext.fetch(fetchRequest)
+            let data = results.first
+            managedContext.delete(data!)
+            try managedContext.save()
+        }catch {
+            print ("delete task failed", error)
+        }
+    }
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
@@ -338,6 +389,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
             let pin = places[indexPath.row]
             places.remove(at: indexPath.row)
             mapView.removeAnnotation(pin)
+            deletePin(pin.coordinate.latitude, pin.coordinate.longitude, pin.title!, pin.subtitle!)
             tableView.reloadData()
             print(places)
         }
