@@ -199,12 +199,16 @@ class ViewController: UIViewController {
         if sender == rightButton {
             index += 1
         }else if sender == leftButton{
-            print("left")
             index -= 1
         }
         
-        if index < 0 || index >= places.count {
+//        if index < 0 || index >= places.count {
+//            index = 0
+//        }
+        if index < 0 {
             index = 0
+        }else if index >= places.count {
+            index = places.count - 1
         }
         print(index)
         mapView.setRegion(MKCoordinateRegion(center: places[index].coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)), animated: false)
